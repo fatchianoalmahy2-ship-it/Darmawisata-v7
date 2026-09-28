@@ -1,0 +1,306 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* Scrollbar hide helper */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Standardized UI Button Utility Classes */
+  .btn-standard {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 2.75rem; /* 44px standard touch target */
+    padding-left: 1rem;
+    padding-right: 1rem;
+    border-radius: 0.75rem; /* 12px rounded */
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background-color: #059669; /* emerald-600 */
+    color: #ffffff;
+  }
+  .btn-primary:hover {
+    background-color: #047857; /* emerald-700 */
+  }
+
+  .btn-secondary {
+    background-color: #0f172a; /* slate-900 */
+    color: #ffffff;
+  }
+  .btn-secondary:hover {
+    background-color: #1e293b; /* slate-800 */
+  }
+
+  .btn-outline {
+    background-color: #ffffff;
+    color: #334155; /* slate-700 */
+    border: 1px solid #cbd5e1; /* slate-300 */
+  }
+  .btn-outline:hover {
+    background-color: #f8fafc; /* slate-50 */
+    border-color: #94a3b8; /* slate-400 */
+  }
+
+  .btn-danger {
+    background-color: #e11d48; /* rose-600 */
+    color: #ffffff;
+  }
+  .btn-danger:hover {
+    background-color: #be123c; /* rose-700 */
+  }
+
+  .btn-accent {
+    background-color: #2563eb; /* blue-600 */
+    color: #ffffff;
+  }
+  .btn-accent:hover {
+    background-color: #1d4ed8; /* blue-700 */
+  }
+}
+
+/* --- A4 Paper Sheet Styling for Screen Preview --- */
+.printable-area {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  width: 210mm !important;
+  max-width: 100% !important;
+  min-height: 297mm !important;
+  padding: 15mm !important;
+  margin: 0 auto !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 4px !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  font-family: 'Times New Roman', Times, Serif, Georgia, serif !important;
+}
+
+/* Image boundary constraints inside A4 paper preview */
+.printable-area img {
+  max-width: 100% !important;
+  max-height: 80px !important;
+  object-fit: contain !important;
+}
+
+/* On mobile/tablet screens, gracefully adapt the A4 paper box width */
+@media screen and (max-width: 220mm) {
+  .printable-area {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 10mm 6mm !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+}
+
+  /* Global Print Styles for High-Quality Official PDF Printing */
+@media print {
+  @page {
+    size: A4 portrait !important;
+    margin: 4mm 5mm 4mm 5mm !important; /* Zero-waste printable margins for desktop and smartphone printer drivers */
+  }
+
+  /* Hide non-printable elements strictly */
+  header,
+  footer,
+  aside,
+  nav,
+  button,
+  select,
+  input,
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  /* Reset body and page containers for pure white background without extra smartphone margins */
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Reset fixed modal overlays for print dialogs */
+  .fixed.inset-0,
+  div[role="dialog"] {
+    position: static !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    max-height: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Force wrapper containers to display as block, removing flex/grid constraints that break print pagination */
+  main,
+  div.min-h-screen,
+  body > div.flex-1 {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Force printable areas to take full page width without rounded borders or shadows */
+  .printable-area,
+  #printable-recap,
+  #printable-surat,
+  #printable-surat-content,
+  #printable-bus,
+  #printable-bus-area-wrapper,
+  #printable-bus-area,
+  #batch-bus-print-container,
+  #batch-room-print-container,
+  .printable-bus-area,
+  .bus-a4-page,
+  .chaperone-sheet,
+  #printable-room,
+  #printable-rundown,
+  #printable-admin {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    transform: none !important;
+  }
+
+  /* Exact A4 Sheet Page Break handling */
+  .bus-a4-page {
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    box-sizing: border-box !important;
+    max-height: 278mm !important;
+  }
+
+  .bus-a4-page:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Document page per student in batch/single print */
+  .document-page {
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .document-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Reset zoom transform scale for single bus print */
+  #printable-bus-area {
+    transform: none !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 287mm !important;
+    box-sizing: border-box !important;
+    padding: 2mm 4mm !important;
+    margin: 0 auto !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure page break per bus in batch print without micro-overflow */
+  .printable-bus-area {
+    page-break-after: always !important;
+    break-after: page !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 287mm !important;
+    box-sizing: border-box !important;
+    padding: 2mm 4mm !important;
+    margin: 0 auto !important;
+    overflow: hidden !important;
+  }
+
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+    font-size: 11px !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  table:not(.bus-manifest-table) th,
+  table:not(.bus-manifest-table) td {
+    border: 1px solid #333333 !important;
+    padding: 5px 6px !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+    font-size: 11px !important;
+  }
+
+  /* Compact Bus Manifest Table Styling for 50-row single-page A4 print */
+  .bus-manifest-table th,
+  .bus-manifest-table td,
+  .print-cell-compact {
+    padding: 1px 3px !important;
+    font-size: 8px !important;
+    line-height: 1.15 !important;
+    border: 1px solid #000000 !important;
+  }
+
+  /* Avoid page breaks inside cards or signatures */
+  .break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
