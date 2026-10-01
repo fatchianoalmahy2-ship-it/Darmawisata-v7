@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { getSchoolLogoUrl } from '@/lib/logoHelper';
 import { AppSettings } from '@/types';
 
@@ -35,7 +36,7 @@ export const SchoolLogo: React.FC<SchoolLogoProps> = ({
   }
 
   return (
-    <img
+    <Image
       src={resolvedUrl}
       alt={alt}
       width={44}
@@ -43,6 +44,8 @@ export const SchoolLogo: React.FC<SchoolLogoProps> = ({
       onError={() => setImageError(true)}
       className={`${className} object-contain select-none transition-transform hover:scale-105 duration-200 shrink-0`}
       id="school-crest-logo"
+      unoptimized
+      referrerPolicy="no-referrer"
     />
   );
 };

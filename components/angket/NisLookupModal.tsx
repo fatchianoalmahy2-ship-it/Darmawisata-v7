@@ -4,7 +4,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Student } from '@/types';
 import { normalizeClassName } from '@/lib/utils';
 import { Search, UserCheck, CheckCircle2, Loader2 } from 'lucide-react';
-import { getStudentsByClass } from '@/services/firebaseService';
+import { dbService } from '@/services/dbService';
 
 interface NisLookupModalProps {
   isOpen: boolean;
@@ -54,7 +54,7 @@ export const NisLookupModal: React.FC<NisLookupModalProps> = ({
 
       setIsLoading(true);
       try {
-        const fetched = await getStudentsByClass(selectedClassFilter);
+        const fetched = await dbService.getStudentsByClass(selectedClassFilter);
         setClassStudents(fetched);
       } catch (e) {
         console.error('Error fetching class students in NisLookupModal:', e);

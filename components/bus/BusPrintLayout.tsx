@@ -124,7 +124,7 @@ export const BusPrintLayout: React.FC<BusPrintLayoutProps> = ({
             }
           }
         }}
-        className={`flex-1 min-h-[38px] sm:min-h-[42px] py-0.5 rounded-lg border flex items-center justify-center transition-all relative group/seat select-none seat-item cursor-pointer shadow-2xs ${
+        className={`flex-1 h-[30px] sm:h-[34px] min-h-[28px] max-h-[34px] py-0.5 rounded-t-lg rounded-b-md border flex items-center justify-center transition-all relative group/seat select-none seat-item cursor-pointer shadow-2xs ${
           isActiveSource
             ? 'border-amber-500 ring-2 ring-amber-500 bg-amber-100 scale-105 z-30 animate-pulse'
             : isSelectedInBulk
@@ -157,19 +157,15 @@ export const BusPrintLayout: React.FC<BusPrintLayoutProps> = ({
             {isSelectedInBulk ? '✓' : ''}
           </span>
         )}
-        <div className="flex flex-col items-center justify-center text-center w-full h-full px-0.5 leading-tight">
-          <span className="font-black text-xs sm:text-[13px] tracking-tight block select-none">
+        <div className="flex flex-col items-center justify-center text-center w-full h-full px-0.5 leading-none">
+          <span className="font-black text-xs sm:text-[13px] tracking-tight block select-none leading-none">
             {displayLabel}
           </span>
-          {isOccupiedByChaperone ? (
-            <span className="text-[7.5px] font-black uppercase tracking-tight text-purple-900 truncate max-w-full block">
+          {isOccupiedByChaperone && (
+            <span className="text-[6.5px] font-black uppercase tracking-wider text-purple-950 bg-purple-200/90 px-1 py-0.2 rounded-xs mt-0.5 leading-none block">
               GURU
             </span>
-          ) : student ? (
-            <span className="text-[8px] font-bold uppercase tracking-tight truncate max-w-full block print:hidden">
-              {student.name.trim().split(/\s+/)[0]}
-            </span>
-          ) : null}
+          )}
           {isBeyondBaseCapacity && isOccupied && (
             <span className="text-[5.5px] font-black text-amber-700 leading-none no-print">★</span>
           )}
@@ -283,10 +279,10 @@ export const BusPrintLayout: React.FC<BusPrintLayoutProps> = ({
             </div>
           </div>
 
-          {/* Main Grid: Student Table (Left 7 cols) & Seating Chart (Right 5 cols) */}
-          <div className="grid grid-cols-12 gap-3 items-stretch flex-1 min-h-0 my-0.5">
-            {/* Student Table (Left 7 Cols - 50 Rows) */}
-            <div className="col-span-7 flex flex-col h-full border border-slate-300 rounded-xl overflow-hidden bg-white">
+          {/* Main Grid: Student Table (Left 52%) & Seating Chart (Right 48%) */}
+          <div className="flex flex-row gap-3 items-stretch flex-1 min-h-0 my-0.5">
+            {/* Student Table (Left 52% - 50 Rows) */}
+            <div className="w-[52%] shrink-0 flex flex-col h-full border border-slate-300 rounded-xl overflow-hidden bg-white">
               <div className="bg-slate-100 text-slate-800 font-black text-[8.5px] uppercase px-2 py-0.5 border-b border-slate-300 flex justify-between items-center shrink-0">
                 <span>DAFTAR KURSI & PENUMPANG (01 - {effectiveCapacity.toString().padStart(2, '0')})</span>
                 <span className="text-slate-500 font-semibold text-[8px]">
@@ -373,8 +369,8 @@ export const BusPrintLayout: React.FC<BusPrintLayoutProps> = ({
               </div>
             </div>
 
-            {/* Seating Plan (Right 5 Cols) */}
-            <div className="col-span-5 flex flex-col h-full">
+            {/* Seating Plan (Right 48%) */}
+            <div className="w-[48%] shrink-0 flex flex-col h-full">
               <div className="bg-slate-50/70 border-2 border-slate-900 rounded-[18px] p-2 flex flex-col justify-between h-full">
                 {/* Windshield & Driver Area */}
                 <div className="flex items-center justify-between pb-0.5 border-b border-slate-300 mb-1 shrink-0">

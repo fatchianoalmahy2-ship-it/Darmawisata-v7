@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Modal } from '@/components/ui/Modal';
 import { SchoolClass, Student, AppSettings } from '@/types';
 import { RecapGeneratorService } from '@/services/recapGenerator';
@@ -420,9 +421,12 @@ export const AutoRecapDispatchModal: React.FC<AutoRecapDispatchModalProps> = ({
               <div className="flex justify-center bg-slate-950 p-3 rounded-xl border border-slate-800">
                 {waStatus === 'QR_READY' && qrCodeData ? (
                   <div className="text-center space-y-1.5">
-                    <img
+                    <Image
                       src={qrCodeData}
                       alt="WhatsApp Web QR Code"
+                      width={128}
+                      height={128}
+                      unoptimized
                       className="w-32 h-32 bg-white p-1.5 rounded-lg border border-slate-700 inline-block shadow-lg"
                     />
                     <p className="text-[10px] font-bold text-amber-300 animate-pulse">

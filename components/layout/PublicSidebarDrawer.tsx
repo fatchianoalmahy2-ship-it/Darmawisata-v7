@@ -70,18 +70,12 @@ export const PublicSidebarDrawer: React.FC<PublicSidebarDrawerProps> = ({
         {/* Drawer Header */}
         <div className="bg-slate-900 text-white p-5 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-3">
-            {settings?.appLogoUrl && !logoError ? (
-              <img
-                key={settings.appLogoUrl}
-                src={settings.appLogoUrl}
-                alt="App Logo"
-                referrerPolicy="no-referrer"
-                onError={() => setLogoError(true)}
-                className="w-10 h-10 rounded-xl object-contain border border-slate-700 bg-white"
-              />
-            ) : (
-              <SchoolLogo className="w-10 h-10" />
-            )}
+            <SchoolLogo
+              className="w-10 h-10"
+              src={settings?.appLogoUrl}
+              settings={settings}
+              alt="App Logo"
+            />
             <div>
               <h3 className="font-extrabold text-sm text-white tracking-tight uppercase">
                 {settings?.appName || 'SIM Darmawisata'}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import { Student, DestinationType, WaveType, TShirtSize, WaiverType, AppSettings, GenderType } from '@/types';
 import schoolMetadata from '@/config/schoolMetadata.json';
 import tshirtDesignA from '@/src/assets/images/tshirt_design_a_1785842351713.jpg';
@@ -286,9 +287,8 @@ export const AngketForm: React.FC<AngketFormProps> = ({
         return;
       }
 
-      // 2. Fetch from Supabase
-      const { getStudentByNis } = await import('@/services/firebaseService');
-      const remoteStudent = await getStudentByNis(queryTerm);
+      // 2. Fetch via dbService (checks memory cache, Supabase if configured, or Firebase fallback)
+      const remoteStudent = await dbService.getStudentByNis(queryTerm);
 
       if (remoteStudent) {
         populateStudentData(remoteStudent);
@@ -1016,11 +1016,13 @@ export const AngketForm: React.FC<AngketFormProps> = ({
                     }`}
                   >
                     <div className="relative w-full aspect-square max-w-[130px] sm:max-w-[180px] rounded-xl overflow-hidden bg-slate-50 border border-slate-100">
-                      <img
-                        src={settings?.tshirtDesignAUrl || tshirtDesignA.src}
+                      <Image
+                        src={settings?.tshirtDesignAUrl || tshirtDesignA}
                         alt="Desain Kaos A"
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                         referrerPolicy="no-referrer"
+                        unoptimized={!!settings?.tshirtDesignAUrl?.startsWith('data:')}
                       />
                       <div className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-emerald-600 text-white font-black text-[9px] sm:text-[10px] rounded-lg shadow-sm">
                         OPSI A
@@ -1053,11 +1055,13 @@ export const AngketForm: React.FC<AngketFormProps> = ({
                     }`}
                   >
                     <div className="relative w-full aspect-square max-w-[130px] sm:max-w-[180px] rounded-xl overflow-hidden bg-slate-50 border border-slate-100">
-                      <img
-                        src={settings?.tshirtDesignBUrl || tshirtDesignB.src}
+                      <Image
+                        src={settings?.tshirtDesignBUrl || tshirtDesignB}
                         alt="Desain Kaos B"
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                         referrerPolicy="no-referrer"
+                        unoptimized={!!settings?.tshirtDesignBUrl?.startsWith('data:')}
                       />
                       <div className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-indigo-600 text-white font-black text-[9px] sm:text-[10px] rounded-lg shadow-sm">
                         OPSI B

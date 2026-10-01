@@ -147,9 +147,6 @@ export function generateBusPrintDocumentHtml(options: BusPrintOptions): string {
       const chapInfo = resolveSeatChaperoneInfo(sn, bus, allChaperones, settings, seatStudentMap, waveChaperonesList);
       const isChap = !!chapInfo.name;
       const isM = isChap ? (chapInfo.gender === 'LAKI-LAKI') : (st?.gender === 'LAKI-LAKI');
-      const roomNumStr = isChap
-        ? (chapInfo.roomNumber ? `Kmr ${chapInfo.roomNumber}` : '-')
-        : (st?.roomNumber ? `Kmr ${st.roomNumber}` : '-');
 
       tableRowsHtml += `
         <tr class="${isChap ? 'row-chap' : st ? (isM ? 'row-male' : 'row-female') : 'row-empty'}">
@@ -159,7 +156,6 @@ export function generateBusPrintDocumentHtml(options: BusPrintOptions): string {
           </td>
           <td class="col-jk">${isChap ? (isM ? 'L' : 'P') : st ? (isM ? 'L' : 'P') : '-'}</td>
           <td class="col-kelas">${isChap ? '<span class="text-pendamping">PENDAMPING</span>' : st ? st.className : '-'}</td>
-          <td class="col-kamar">${roomNumStr}</td>
         </tr>
       `;
     });
@@ -172,7 +168,7 @@ export function generateBusPrintDocumentHtml(options: BusPrintOptions): string {
           ${activeChaperones
             .map(
               (c) =>
-                `<div class="chap-item"><span class="chap-lbl">PENDAMPING (KURSI ${c.num}):</span> <span class="chap-val">${c.name}</span>${c.roomNumber ? ` <span class="chap-room-tag">KAMAR #${c.roomNumber}</span>` : ''}</div>`
+                `<div class="chap-item"><span class="chap-lbl">PENDAMPING (KURSI ${c.num}):</span> <span class="chap-val">${c.name}</span></div>`
             )
             .join('')}
         </div>
@@ -410,10 +406,10 @@ export function generateBusPrintDocumentHtml(options: BusPrintOptions): string {
             margin: 2px 0 !important;
           }
 
-          /* Table Box (58%) */
+          /* Table Box (52%) */
           .bus-table-box {
-            width: 58% !important;
-            flex: 0 0 58% !important;
+            width: 52% !important;
+            flex: 0 0 52% !important;
             border: 1px solid #cbd5e1 !important;
             border-radius: 6px !important;
             overflow: hidden !important;
@@ -536,13 +532,13 @@ export function generateBusPrintDocumentHtml(options: BusPrintOptions): string {
             font-size: 7px !important;
           }
 
-          /* Visual Seat Box (42%) */
+          /* Visual Seat Box (48%) */
           .bus-visual-box {
-            width: 42% !important;
-            flex: 0 0 42% !important;
+            width: 48% !important;
+            flex: 0 0 48% !important;
             border: 2px solid #0f172a !important;
             border-radius: 12px !important;
-            padding: 5px 6px !important;
+            padding: 6px 8px !important;
             background: #f8fafc !important;
             display: flex !important;
             flex-direction: column !important;
@@ -566,24 +562,24 @@ export function generateBusPrintDocumentHtml(options: BusPrintOptions): string {
             flex-direction: column !important;
             justify-content: space-between !important;
             margin: 2px 0 !important;
-            gap: 1px !important;
+            gap: 1.5px !important;
           }
           .bus-row {
             display: flex !important;
             align-items: center !important;
             justify-content: space-between !important;
-            gap: 3px !important;
+            gap: 4px !important;
             flex: 1 1 auto !important;
           }
           .bus-seat-pair {
             flex: 1 !important;
             display: flex !important;
-            gap: 3px !important;
+            gap: 4px !important;
             height: 100% !important;
             align-items: center !important;
           }
           .bus-aisle {
-            width: 6px !important;
+            width: 8px !important;
             text-align: center !important;
             font-size: 7px !important;
             color: #94a3b8 !important;
@@ -592,33 +588,38 @@ export function generateBusPrintDocumentHtml(options: BusPrintOptions): string {
           .bus-seat {
             flex: 1 !important;
             height: 100% !important;
-            min-height: 18px !important;
-            max-height: 25px !important;
-            border-radius: 4px !important;
+            min-height: 24px !important;
+            max-height: 32px !important;
+            border-radius: 6px 6px 4px 4px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             font-size: 11px !important;
             font-weight: 900 !important;
             overflow: hidden !important;
-            padding: 0 1px !important;
+            padding: 1px 2px !important;
             gap: 2px !important;
             box-sizing: border-box !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
           }
           .bus-seat-num {
-            font-size: 11px !important;
+            font-size: 11.5px !important;
             font-weight: 900 !important;
             line-height: 1 !important;
+            letter-spacing: -0.2px !important;
           }
           .bus-seat-guru {
-            border: 1.5px solid #16a34a !important;
+            border: 1.5px solid #15803d !important;
             background: #dcfce7 !important;
             color: #14532d !important;
           }
           .bus-seat-badge-guru {
-            font-size: 6.5px !important;
+            font-size: 7px !important;
             color: #14532d !important;
             font-weight: 900 !important;
+            background: #bbf7d0 !important;
+            padding: 0.5px 2.5px !important;
+            border-radius: 2px !important;
           }
           .bus-seat-male {
             border: 1.5px solid #0284c7 !important;
@@ -631,14 +632,14 @@ export function generateBusPrintDocumentHtml(options: BusPrintOptions): string {
             color: #be123c !important;
           }
           .bus-seat-empty {
-            border: 1px dashed #94a3b8 !important;
+            border: 1px dashed #cbd5e1 !important;
             background: #ffffff !important;
             color: #94a3b8 !important;
           }
           .bus-back-row {
             display: flex !important;
-            gap: 2px !important;
-            padding-top: 2px !important;
+            gap: 3px !important;
+            padding-top: 3px !important;
             border-top: 1px dashed #cbd5e1 !important;
             align-items: center !important;
             flex: 1 1 auto !important;

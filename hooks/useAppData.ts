@@ -80,9 +80,9 @@ export function useAppData() {
   }, []);
 
   // Targeted fetching helpers directly from dbService (Cloud-First Supabase)
-  const fetchStudentsOnly = useCallback(async () => {
+  const fetchStudentsOnly = useCallback(async (forceRefresh = false) => {
     try {
-      const stds = await dbService.getAllStudents();
+      const stds = await dbService.getAllStudents(forceRefresh);
       if (stds && stds.length > 0) {
         setStudents(stds);
       }
@@ -91,9 +91,9 @@ export function useAppData() {
     }
   }, []);
 
-  const fetchClassesOnly = useCallback(async () => {
+  const fetchClassesOnly = useCallback(async (forceRefresh = false) => {
     try {
-      const clss = await dbService.getAllClasses();
+      const clss = await dbService.getAllClasses(forceRefresh);
       if (clss && clss.length > 0) {
         setClasses(clss);
       }
@@ -102,9 +102,9 @@ export function useAppData() {
     }
   }, []);
 
-  const fetchSettingsOnly = useCallback(async () => {
+  const fetchSettingsOnly = useCallback(async (forceRefresh = false) => {
     try {
-      const stgs = await dbService.getSettings();
+      const stgs = await dbService.getSettings(forceRefresh);
       if (stgs) {
         setSettings(stgs);
       }
@@ -113,9 +113,9 @@ export function useAppData() {
     }
   }, []);
 
-  const fetchRundownsOnly = useCallback(async () => {
+  const fetchRundownsOnly = useCallback(async (forceRefresh = false) => {
     try {
-      const rdns = await dbService.getAllRundowns();
+      const rdns = await dbService.getAllRundowns(forceRefresh);
       if (rdns && rdns.length > 0) {
         setRundowns(rdns);
       }
@@ -238,18 +238,32 @@ export function useAppData() {
       pendingTables.clear();
 
       if (tablesToSync.length >= 3) {
-        // If almost everything changed, do a single full fetch
+        // If almost everything changed, do a single full fetch with force refresh
+        dbService.invalidateCache('all');
         fetchAllData();
       } else {
-        // Selective sync only for tables that actually changed!
-        if (tablesToSync.includes('students')) fetchStudentsOnly();
-        if (tablesToSync.includes('classes')) fetchClassesOnly();
-        if (tablesToSync.includes('settings')) fetchSettingsOnly();
-        if (tablesToSync.includes('rundowns')) fetchRundownsOnly();
+        // Selective sync only for tables that actually changed with forceRefresh
+        if (tablesToSync.includes('students')) {
+          dbService.invalidateCache('students');
+          fetchStudentsOnly(true);
+        }
+        if (tablesToSync.includes('classes')) {
+          dbService.invalidateCache('classes');
+          fetchClassesOnly(true);
+        }
+        if (tablesToSync.includes('settings')) {
+          dbService.invalidateCache('settings');
+          fetchSettingsOnly(true);
+        }
+        if (tablesToSync.includes('rundowns')) {
+          dbService.invalidateCache('rundowns');
+          fetchRundownsOnly(true);
+        }
       }
     };
 
     const queueTableSync = (table: 'students' | 'classes' | 'settings' | 'rundowns') => {
+      dbService.invalidateCache(table);
       pendingTables.add(table);
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(processPendingRealtimeSync, 800);

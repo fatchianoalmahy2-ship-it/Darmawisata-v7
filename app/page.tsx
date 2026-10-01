@@ -4,18 +4,55 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AppTab } from '@/components/ui/Header';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
+import dynamic from 'next/dynamic';
 
 import { AngketForm } from '@/components/angket/AngketForm';
-import { WaliKelasPortal } from '@/components/walikelas/WaliKelasPortal';
-import { BusSeatMap } from '@/components/bus/BusSeatMap';
-import { RoomGrid } from '@/components/kamar/RoomGrid';
-import { RecapDashboard } from '@/components/recap/RecapDashboard';
 import { SuratIzinView } from '@/components/surat/SuratIzinView';
 import { RundownTimeline } from '@/components/rundown/RundownTimeline';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
-import { SettingsModal } from '@/components/admin/SettingsModal';
 import { LoginModal } from '@/components/auth/LoginModal';
-import { ProfileSettingsModal } from '@/components/auth/ProfileSettingsModal';
+
+// High-Performance Dynamic Code Splitting for heavy panels
+const TabLoadingSkeleton = ({ title }: { title: string }) => (
+  <div className="flex flex-col items-center justify-center min-h-[320px] p-8 space-y-4 bg-white/80 backdrop-blur-xs rounded-3xl border border-slate-100 shadow-xs">
+    <div className="w-9 h-9 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+    <p className="text-xs font-semibold text-slate-500 animate-pulse">{title}</p>
+  </div>
+);
+
+const AdminDashboard = dynamic(
+  () => import('@/components/admin/AdminDashboard').then((m) => m.AdminDashboard),
+  { loading: () => <TabLoadingSkeleton title="Menyiapkan Dasbor Administrator..." />, ssr: false }
+);
+
+const RecapDashboard = dynamic(
+  () => import('@/components/recap/RecapDashboard').then((m) => m.RecapDashboard),
+  { loading: () => <TabLoadingSkeleton title="Menyiapkan Rekapitulasi Data..." />, ssr: false }
+);
+
+const BusSeatMap = dynamic(
+  () => import('@/components/bus/BusSeatMap').then((m) => m.BusSeatMap),
+  { loading: () => <TabLoadingSkeleton title="Menyiapkan Denah Armada Bus..." />, ssr: false }
+);
+
+const RoomGrid = dynamic(
+  () => import('@/components/kamar/RoomGrid').then((m) => m.RoomGrid),
+  { loading: () => <TabLoadingSkeleton title="Menyiapkan Alokasi Kamar Hotel..." />, ssr: false }
+);
+
+const WaliKelasPortal = dynamic(
+  () => import('@/components/walikelas/WaliKelasPortal').then((m) => m.WaliKelasPortal),
+  { loading: () => <TabLoadingSkeleton title="Menyiapkan Portal Wali Kelas..." />, ssr: false }
+);
+
+const SettingsModal = dynamic(
+  () => import('@/components/admin/SettingsModal').then((m) => m.SettingsModal),
+  { ssr: false }
+);
+
+const ProfileSettingsModal = dynamic(
+  () => import('@/components/auth/ProfileSettingsModal').then((m) => m.ProfileSettingsModal),
+  { ssr: false }
+);
 
 import { Student, SchoolClass, AppSettings, Bus, Room, AuthUser, RundownItem } from '@/types';
 import { AdminPillarKey, AdminSubTabKey, DEFAULT_SUBTAB_FOR_PILLAR } from '@/lib/navigationMetadata';

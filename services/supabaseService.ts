@@ -210,27 +210,27 @@ export class SupabaseStudentRepository implements IStudentRepository {
     }
 
     try {
-      // PERFORMANCE OPTIMIZATION: Reduce from 3 sequential queries to exactly ONE query.
-      // This reduces database roundtrip latency by up to 66%.
+      // High-performance NIS lookup: exact match limit 1 first
+      const { data: exactMatch, error: exactErr } = await supabase
+        .from('students')
+        .select(SCHEMA_CONFIGS.students.selectFields)
+        .eq('nis', cleanNis)
+        .limit(1)
+        .maybeSingle();
+
+      if (exactMatch && !exactErr) {
+        exactMatch.className = normalizeClassName(exactMatch.className);
+        return exactMatch as Student;
+      }
+
+      // Fallback: prefix match limit 5
       const { data, error } = await supabase
         .from('students')
         .select(SCHEMA_CONFIGS.students.selectFields)
-        .ilike('nis', `%${cleanNis}%`);
+        .ilike('nis', `${cleanNis}%`)
+        .limit(5);
 
       if (error || !data || data.length === 0) return null;
-
-      // Score and rank matches in memory to keep search highly accurate and fast
-      const exact = data.find((s) => s.nis?.toLowerCase() === cleanNis.toLowerCase());
-      if (exact) {
-        exact.className = normalizeClassName(exact.className);
-        return exact as Student;
-      }
-
-      const prefix = data.find((s) => s.nis?.toLowerCase().startsWith(cleanNis.toLowerCase()));
-      if (prefix) {
-        prefix.className = normalizeClassName(prefix.className);
-        return prefix as Student;
-      }
 
       const firstMatch = data[0];
       firstMatch.className = normalizeClassName(firstMatch.className);

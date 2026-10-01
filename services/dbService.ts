@@ -22,6 +22,36 @@ const firebaseSettings = new FirebaseSettingsRepository();
 const firebaseRundowns = new FirebaseRundownRepository();
 const firebaseActivityLogs = new FirebaseActivityLogRepository();
 
+// In-Memory SWR Cache with TTL (3 minutes) to drastically reduce PostgREST egress
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
+
+let studentsCache: CacheEntry<Student[]> | null = null;
+let classesCache: CacheEntry<SchoolClass[]> | null = null;
+let settingsCache: CacheEntry<AppSettings> | null = null;
+let rundownsCache: CacheEntry<RundownItem[]> | null = null;
+
+export const invalidateDbCache = (target?: 'students' | 'classes' | 'settings' | 'rundowns' | 'all') => {
+  if (!target || target === 'all') {
+    studentsCache = null;
+    classesCache = null;
+    settingsCache = null;
+    rundownsCache = null;
+  } else if (target === 'students') {
+    studentsCache = null;
+  } else if (target === 'classes') {
+    classesCache = null;
+  } else if (target === 'settings') {
+    settingsCache = null;
+  } else if (target === 'rundowns') {
+    rundownsCache = null;
+  }
+};
+
 export const dbService = {
   getProvider: (): 'SUPABASE' | 'FIREBASE' => {
     return isSupabaseConfigured() ? 'SUPABASE' : 'FIREBASE';
@@ -31,42 +61,107 @@ export const dbService = {
     return isSupabaseConfigured();
   },
 
+  invalidateCache: invalidateDbCache,
+
   // --------------------------------------------------------------------------
   // STUDENTS OPERATIONS
   // --------------------------------------------------------------------------
-  getAllStudents: async (): Promise<Student[]> => {
+  getAllStudents: async (forceRefresh = false): Promise<Student[]> => {
+    const now = Date.now();
+    if (!forceRefresh && studentsCache && (now - studentsCache.timestamp < CACHE_TTL_MS)) {
+      return studentsCache.data;
+    }
+
+    let result: Student[] = [];
     if (isSupabaseConfigured()) {
       try {
         const students = await SupabaseContainer.students.getAll();
         if (students && students.length > 0) {
-          return students;
+          result = students;
+        } else {
+          // AUTO-SEED to Supabase if Supabase table is empty
+          console.info('[dbService] Supabase students table is empty. Initiating auto-seed from fallback...');
+          let seedSource: Student[] = [];
+          try {
+            seedSource = await firebaseStudents.getAll();
+          } catch {
+            seedSource = [];
+          }
+          if (!seedSource || seedSource.length === 0) {
+            seedSource = (schoolMetadata.initialStudents as unknown as Student[]) || [];
+          }
+          if (seedSource.length > 0) {
+            await SupabaseContainer.students.save(seedSource);
+            console.info(`[dbService] Successfully auto-seeded ${seedSource.length} students into Supabase!`);
+            result = seedSource;
+          }
         }
-        // AUTO-SEED to Supabase if Supabase table is empty
-        console.info('[dbService] Supabase students table is empty. Initiating auto-seed from fallback...');
-        let seedSource: Student[] = [];
-        try {
-          seedSource = await firebaseStudents.getAll();
-        } catch {
-          seedSource = [];
-        }
-        if (!seedSource || seedSource.length === 0) {
-          seedSource = (schoolMetadata.initialStudents as unknown as Student[]) || [];
-        }
-        if (seedSource.length > 0) {
-          await SupabaseContainer.students.save(seedSource);
-          console.info(`[dbService] Successfully auto-seeded ${seedSource.length} students into Supabase!`);
-          return seedSource;
-        }
-        return [];
       } catch (err) {
         console.warn('[dbService] Supabase getAllStudents failed, falling back to Firebase:', err);
-        return firebaseStudents.getAll();
+        result = await firebaseStudents.getAll();
+      }
+    } else {
+      result = await firebaseStudents.getAll();
+    }
+
+    if (result && result.length > 0) {
+      studentsCache = { data: result, timestamp: now };
+    }
+    return result;
+  },
+
+  getStudentById: async (id: string): Promise<Student | null> => {
+    if (!id) return null;
+    if (studentsCache?.data) {
+      const found = studentsCache.data.find((s) => s.id === id);
+      if (found) return found;
+    }
+    if (isSupabaseConfigured()) {
+      try {
+        return await SupabaseContainer.students.getById(id);
+      } catch (err) {
+        console.warn('[dbService] Supabase getById failed, falling back:', err);
       }
     }
-    return firebaseStudents.getAll();
+    return firebaseStudents.getById(id);
+  },
+
+  getStudentByNis: async (nis: string): Promise<Student | null> => {
+    if (!nis) return null;
+    const cleanNis = nis.trim().toLowerCase();
+    if (studentsCache?.data) {
+      const found = studentsCache.data.find((s) => s.nis?.toLowerCase() === cleanNis);
+      if (found) return found;
+    }
+    if (isSupabaseConfigured()) {
+      try {
+        return await SupabaseContainer.students.getByNis(nis);
+      } catch (err) {
+        console.warn('[dbService] Supabase getByNis failed, falling back:', err);
+      }
+    }
+    return firebaseStudents.getByNis(nis);
+  },
+
+  getStudentsByClass: async (className: string): Promise<Student[]> => {
+    if (!className) return [];
+    const normalizedTarget = normalizeClassName(className);
+    if (studentsCache?.data) {
+      const matches = studentsCache.data.filter((s) => normalizeClassName(s.className) === normalizedTarget);
+      if (matches.length > 0) return matches;
+    }
+    if (isSupabaseConfigured()) {
+      try {
+        return await SupabaseContainer.students.getByClass(className);
+      } catch (err) {
+        console.warn('[dbService] Supabase getByClass failed, falling back:', err);
+      }
+    }
+    return firebaseStudents.getByClass(className);
   },
 
   putStudents: async (students: Student[], onProgress?: (processed: number, total: number) => void): Promise<void> => {
+    invalidateDbCache('students');
     if (isSupabaseConfigured()) {
       try {
         await SupabaseContainer.students.save(students);
@@ -80,6 +175,7 @@ export const dbService = {
   },
 
   putSingleStudent: async (student: Student): Promise<void> => {
+    invalidateDbCache('students');
     if (isSupabaseConfigured()) {
       try {
         await SupabaseContainer.students.saveSingle(student);
@@ -93,6 +189,7 @@ export const dbService = {
   },
 
   deleteStudent: async (studentId: string): Promise<void> => {
+    invalidateDbCache('students');
     if (isSupabaseConfigured()) {
       try {
         await SupabaseContainer.students.deleteSingle(studentId);
@@ -105,6 +202,7 @@ export const dbService = {
   },
 
   deleteMultipleStudents: async (studentIds: string[]): Promise<void> => {
+    invalidateDbCache('students');
     if (isSupabaseConfigured()) {
       try {
         await SupabaseContainer.students.deleteMultiple(studentIds);
@@ -117,6 +215,7 @@ export const dbService = {
   },
 
   clearStudents: async (): Promise<void> => {
+    invalidateDbCache('students');
     if (isSupabaseConfigured()) {
       try {
         await SupabaseContainer.students.clearAll();
@@ -131,38 +230,51 @@ export const dbService = {
   // --------------------------------------------------------------------------
   // CLASSES OPERATIONS
   // --------------------------------------------------------------------------
-  getAllClasses: async (): Promise<SchoolClass[]> => {
+  getAllClasses: async (forceRefresh = false): Promise<SchoolClass[]> => {
+    const now = Date.now();
+    if (!forceRefresh && classesCache && (now - classesCache.timestamp < CACHE_TTL_MS)) {
+      return classesCache.data;
+    }
+
+    let result: SchoolClass[] = [];
     if (isSupabaseConfigured()) {
       try {
         const classes = await SupabaseContainer.classes.getAll();
         if (classes && classes.length > 0) {
-          return classes;
+          result = classes;
+        } else {
+          // AUTO-SEED Classes to Supabase if empty
+          console.info('[dbService] Supabase classes table is empty. Auto-seeding classes...');
+          let seedClasses: SchoolClass[] = [];
+          try {
+            seedClasses = await firebaseClasses.getAll();
+          } catch {
+            seedClasses = [];
+          }
+          if (!seedClasses || seedClasses.length === 0) {
+            seedClasses = (schoolMetadata.classes as unknown as SchoolClass[]) || [];
+          }
+          if (seedClasses.length > 0) {
+            await SupabaseContainer.classes.save(seedClasses);
+            result = seedClasses;
+          }
         }
-        // AUTO-SEED Classes to Supabase if empty
-        console.info('[dbService] Supabase classes table is empty. Auto-seeding classes...');
-        let seedClasses: SchoolClass[] = [];
-        try {
-          seedClasses = await firebaseClasses.getAll();
-        } catch {
-          seedClasses = [];
-        }
-        if (!seedClasses || seedClasses.length === 0) {
-          seedClasses = (schoolMetadata.classes as unknown as SchoolClass[]) || [];
-        }
-        if (seedClasses.length > 0) {
-          await SupabaseContainer.classes.save(seedClasses);
-          return seedClasses;
-        }
-        return [];
       } catch (err) {
         console.warn('[dbService] Supabase getAllClasses failed, falling back:', err);
-        return firebaseClasses.getAll();
+        result = await firebaseClasses.getAll();
       }
+    } else {
+      result = await firebaseClasses.getAll();
     }
-    return firebaseClasses.getAll();
+
+    if (result && result.length > 0) {
+      classesCache = { data: result, timestamp: now };
+    }
+    return result;
   },
 
   putClasses: async (classes: SchoolClass[], onProgress?: (processed: number, total: number) => void): Promise<void> => {
+    invalidateDbCache('classes');
     if (isSupabaseConfigured()) {
       try {
         await SupabaseContainer.classes.save(classes);
@@ -176,6 +288,7 @@ export const dbService = {
   },
 
   deleteClass: async (classId: string): Promise<void> => {
+    invalidateDbCache('classes');
     if (isSupabaseConfigured()) {
       try {
         await SupabaseContainer.classes.deleteSingle(classId);
@@ -188,6 +301,7 @@ export const dbService = {
   },
 
   clearClasses: async (): Promise<void> => {
+    invalidateDbCache('classes');
     if (isSupabaseConfigured()) {
       try {
         await SupabaseContainer.classes.clearAll();
@@ -202,19 +316,32 @@ export const dbService = {
   // --------------------------------------------------------------------------
   // SETTINGS OPERATIONS
   // --------------------------------------------------------------------------
-  getSettings: async (): Promise<AppSettings> => {
+  getSettings: async (forceRefresh = false): Promise<AppSettings> => {
+    const now = Date.now();
+    if (!forceRefresh && settingsCache && (now - settingsCache.timestamp < CACHE_TTL_MS)) {
+      return settingsCache.data;
+    }
+
+    let result: AppSettings;
     if (isSupabaseConfigured()) {
       try {
-        return await SupabaseContainer.settings.getSettings();
+        result = await SupabaseContainer.settings.getSettings();
       } catch (err) {
         console.warn('[dbService] Supabase getSettings failed, falling back:', err);
-        return firebaseSettings.getSettings();
+        result = await firebaseSettings.getSettings();
       }
+    } else {
+      result = await firebaseSettings.getSettings();
     }
-    return firebaseSettings.getSettings();
+
+    if (result) {
+      settingsCache = { data: result, timestamp: now };
+    }
+    return result;
   },
 
   putSettings: async (settings: AppSettings): Promise<void> => {
+    invalidateDbCache('settings');
     if (isSupabaseConfigured()) {
       try {
         await SupabaseContainer.settings.saveSettings(settings);
@@ -229,23 +356,37 @@ export const dbService = {
   // --------------------------------------------------------------------------
   // RUNDOWNS OPERATIONS
   // --------------------------------------------------------------------------
-  getAllRundowns: async (): Promise<RundownItem[]> => {
+  getAllRundowns: async (forceRefresh = false): Promise<RundownItem[]> => {
+    const now = Date.now();
+    if (!forceRefresh && rundownsCache && (now - rundownsCache.timestamp < CACHE_TTL_MS)) {
+      return rundownsCache.data;
+    }
+
+    let result: RundownItem[] = [];
     if (isSupabaseConfigured()) {
       try {
         const items = await SupabaseContainer.rundowns.getAll();
         if (items && items.length > 0) {
-          return items;
+          result = items;
+        } else {
+          result = await SupabaseContainer.rundowns.resetToDefault();
         }
-        return await SupabaseContainer.rundowns.resetToDefault();
       } catch (err) {
         console.warn('[dbService] Supabase getAllRundowns failed, falling back:', err);
-        return firebaseRundowns.getAll();
+        result = await firebaseRundowns.getAll();
       }
+    } else {
+      result = await firebaseRundowns.getAll();
     }
-    return firebaseRundowns.getAll();
+
+    if (result && result.length > 0) {
+      rundownsCache = { data: result, timestamp: now };
+    }
+    return result;
   },
 
   putRundowns: async (rundowns: RundownItem[]): Promise<void> => {
+    invalidateDbCache('rundowns');
     if (isSupabaseConfigured()) {
       try {
         for (const r of rundowns) {
@@ -262,6 +403,7 @@ export const dbService = {
   },
 
   putRundown: async (item: RundownItem): Promise<RundownItem> => {
+    invalidateDbCache('rundowns');
     if (isSupabaseConfigured()) {
       try {
         return await SupabaseContainer.rundowns.saveItem(item);
@@ -273,6 +415,7 @@ export const dbService = {
   },
 
   deleteRundown: async (itemId: string): Promise<void> => {
+    invalidateDbCache('rundowns');
     if (isSupabaseConfigured()) {
       try {
         await SupabaseContainer.rundowns.deleteItem(itemId);
@@ -285,6 +428,7 @@ export const dbService = {
   },
 
   clearRundowns: async (): Promise<RundownItem[]> => {
+    invalidateDbCache('rundowns');
     if (isSupabaseConfigured()) {
       try {
         return await SupabaseContainer.rundowns.resetToDefault();

@@ -200,13 +200,12 @@ export const SuratIzinView: React.FC<SuratIzinViewProps> = ({
 
     setIsServerVerifying(true);
     try {
-      const { getStudentById, getStudentByNis } = await import('@/services/firebaseService');
       let remote: Student | null = null;
       if (targetStudent.id) {
-        remote = await getStudentById(targetStudent.id);
+        remote = await dbService.getStudentById(targetStudent.id);
       }
       if (!remote && targetStudent.nis) {
-        remote = await getStudentByNis(targetStudent.nis);
+        remote = await dbService.getStudentByNis(targetStudent.nis);
       }
 
       if (remote) {
@@ -860,15 +859,12 @@ export const SuratIzinView: React.FC<SuratIzinViewProps> = ({
                     <div className="flex items-center gap-4">
                       {/* Left: Official Header Logo Image or SVG Fallback */}
                       <div className="w-28 h-28 shrink-0 flex items-center justify-center">
-                        {settings?.headerLogoUrl || settings?.appLogoUrl ? (
-                          <img
-                            src={settings.headerLogoUrl || settings.appLogoUrl}
-                            alt="Logo Kop Surat"
-                            className="w-28 h-28 object-contain"
-                          />
-                        ) : (
-                          <SchoolLogo className="w-28 h-28 object-contain" />
-                        )}
+                        <SchoolLogo
+                          className="w-28 h-28"
+                          src={settings?.headerLogoUrl || settings?.appLogoUrl}
+                          settings={settings}
+                          alt="Logo Kop Surat"
+                        />
                       </div>
 
                       {/* Center: School Metadata Headers */}

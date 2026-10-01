@@ -136,20 +136,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
             {/* Logo Brand */}
             <div className="flex items-center gap-3">
-              {settings?.appLogoUrl && !logoError ? (
-                <img
-                  key={settings.appLogoUrl}
-                  src={settings.appLogoUrl}
-                  alt="App Logo"
-                  width={44}
-                  height={44}
-                  referrerPolicy="no-referrer"
-                  onError={() => setLogoError(true)}
-                  className="w-11 h-11 rounded-xl object-contain border border-slate-200 bg-white"
-                />
-              ) : (
-                <SchoolLogo className="w-11 h-11" />
-              )}
+              <SchoolLogo
+                className="w-11 h-11"
+                src={settings?.appLogoUrl}
+                settings={settings}
+                alt="App Logo"
+              />
               <div>
                 <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-none uppercase">
                   {settings?.appName || 'SIM DARMAWISATA'}
